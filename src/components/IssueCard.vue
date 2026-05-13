@@ -1,15 +1,15 @@
 <template>
-  <div class="issue-card card border-0 shadow-sm h-100 transition-shadow" :class="stateClass">
+  <div class="issue-card card border-0 shadow-sm h-100 transition-shadow" :class="cardClass">
     <!-- Card Header: title + state badge -->
     <div class="card-header bg-transparent border-bottom-0 pb-0 pt-3 px-3">
       <div class="d-flex align-items-start gap-2">
         <!-- State icon -->
         <span class="mt-1 flex-shrink-0">
-          <svg v-if="issue.state === 'open'" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" class="text-success">
+          <svg v-if="issue.state === 'open'" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" :class="iconClass">
             <circle cx="8" cy="8" r="7.5" stroke="currentColor"/>
             <circle cx="8" cy="8" r="3" fill="currentColor"/>
           </svg>
-          <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" class="text-secondary">
+          <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" :class="iconClass">
             <circle cx="8" cy="8" r="7.5" stroke="currentColor"/>
             <path d="M5.5 5.5l5 5M10.5 5.5l-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
           </svg>
@@ -30,7 +30,7 @@
     <div class="card-body pt-2 px-3 pb-2">
       <!-- Repo + issue number -->
       <div class="d-flex align-items-center gap-2 mb-2">
-        <span class="badge bg-light text-dark border small">
+        <span class="badge small repo-badge" :class="{ 'repo-badge-solid': props.colorMode === 'solid' }">
           <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 16 16" fill="currentColor" class="me-1">
             <path d="M2 2.5A2.5 2.5 0 014.5 0h8.75a.75.75 0 01.75.75v12.5a.75.75 0 01-.75.75h-2.5a.75.75 0 110-1.5h1.75v-2h-8a1 1 0 00-.714 1.7.75.75 0 01-1.072 1.05A2.495 2.495 0 012 11.5v-9zm10.5-1V9h-8c-.356 0-.694.074-1 .208V2.5a1 1 0 011-1h8z"/>
           </svg>
@@ -118,18 +118,28 @@ import type { GitHubIssue } from '@/types/github'
 
 const props = defineProps<{
   issue: GitHubIssue
+  colorMode: 'soft' | 'solid'
 }>()
 
-const stateClass = computed(() =>
-  props.issue.state === 'open' ? 'border-start border-success border-3' : 'border-start border-secondary border-3',
-)
+const cardClass = computed(() => {
+  if (props.colorMode === 'solid') {
+    return props.issue.state === 'open' ? 'issue-card-open-solid' : 'issue-card-closed-solid'
+  }
+
+  return props.issue.state === 'open' ? 'border-start border-danger border-3' : 'border-start border-success border-3'
+})
+
+const iconClass = computed(() => {
+  if (props.colorMode === 'solid') return 'text-white'
+  return props.issue.state === 'open' ? 'text-danger' : 'text-success'
+})
 
 const repoName = computed(() => {
   const match = props.issue.repository_url.match(/\/([^/]+)$/)
   return match ? match[1] : '—'
 })
 
-function textColor(hexColor: string): string {
+const textColor = (hexColor: string): string => {
   const r = parseInt(hexColor.slice(0, 2), 16)
   const g = parseInt(hexColor.slice(2, 4), 16)
   const b = parseInt(hexColor.slice(4, 6), 16)
@@ -137,7 +147,7 @@ function textColor(hexColor: string): string {
   return luminance > 0.5 ? '#000' : '#fff'
 }
 
-function formatDate(iso: string): string {
+const formatDate = (iso: string): string => {
   return new Intl.DateTimeFormat('de-DE', {
     day: '2-digit',
     month: '2-digit',
@@ -154,14 +164,66 @@ function formatDate(iso: string): string {
   background: var(--panel-surface);
   color: var(--text-primary);
 }
+
+.issue-card-open-solid {
+  background: #b42318;
+  color: #fff;
+}
+
+.issue-card-closed-solid {
+  background: #15803d;
+  color: #fff;
+}
+
 .issue-card:hover {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12) !important;
 }
+
 .issue-title {
   word-break: break-word;
   line-height: 1.4;
   color: var(--text-primary);
 }
+
+.issue-card-open-solid .issue-title,
+.issue-card-closed-solid .issue-title {
+  color: #fff;
+}
+
+.repo-badge {
+  background: var(--panel-muted);
+  color: var(--text-primary);
+  border: 1px solid var(--panel-border);
+}
+
+.repo-badge-solid {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.issue-card-open-solid .text-muted,
+.issue-card-closed-solid .text-muted {
+  color: rgba(255, 255, 255, 0.82) !important;
+}
+
+.issue-card-open-solid .btn-outline-primary,
+.issue-card-open-solid .btn-outline-secondary,
+.issue-card-closed-solid .btn-outline-primary,
+.issue-card-closed-solid .btn-outline-secondary {
+  border-color: rgba(255, 255, 255, 0.65);
+  color: #fff;
+}
+
+.issue-card-open-solid .btn-outline-primary:hover,
+.issue-card-open-solid .btn-outline-secondary:hover,
+.issue-card-closed-solid .btn-outline-primary:hover,
+.issue-card-closed-solid .btn-outline-secondary:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: #fff;
+  color: #fff;
+}
+
 .min-width-0 {
   min-width: 0;
 }

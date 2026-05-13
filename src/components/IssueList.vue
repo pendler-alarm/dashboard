@@ -5,11 +5,12 @@
         v-for="issue in issues"
         :key="issue.id"
         class="list-group-item py-3"
+        :class="itemClass(issue.state)"
       >
         <div class="d-flex flex-column flex-lg-row gap-3 justify-content-between">
           <div class="flex-grow-1 min-width-0">
             <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
-              <span class="badge" :class="issue.state === 'open' ? 'bg-success-subtle text-success-emphasis' : 'bg-secondary-subtle text-secondary-emphasis'">
+              <span class="badge" :class="badgeClass(issue.state)">
                 {{ issue.state === 'open' ? 'Offen' : 'Geschlossen' }}
               </span>
               <span class="badge issue-list-repo-badge">{{ issue.repository?.name ?? repoName(issue.repository_url) }}</span>
@@ -69,8 +70,9 @@
 <script setup lang="ts">
 import type { GitHubIssue } from '@/types/github'
 
-defineProps<{
+const props = defineProps<{
   issues: GitHubIssue[]
+  colorMode: 'soft' | 'solid'
 }>()
 
 const repoName = (repositoryUrl: string): string => {
@@ -86,6 +88,16 @@ const textColor = (hexColor: string): string => {
   const b = parseInt(hexColor.slice(4, 6), 16)
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
   return luminance > 0.5 ? '#000' : '#fff'
+}
+
+const badgeClass = (state: GitHubIssue['state']): string => {
+  if (props.colorMode === 'solid') return 'issue-list-status-badge-solid'
+  return state === 'open' ? 'bg-danger-subtle text-danger-emphasis' : 'bg-success-subtle text-success-emphasis'
+}
+
+const itemClass = (state: GitHubIssue['state']): string => {
+  if (props.colorMode !== 'solid') return state === 'open' ? 'issue-list-item-open' : 'issue-list-item-closed'
+  return state === 'open' ? 'issue-list-item-open-solid' : 'issue-list-item-closed-solid'
 }
 
 const formatDate = (iso: string): string =>
@@ -111,10 +123,70 @@ const formatDate = (iso: string): string =>
   color: var(--text-primary);
 }
 
+.issue-list-item-open {
+  border-inline-start: 4px solid #b42318;
+}
+
+.issue-list-item-closed {
+  border-inline-start: 4px solid #15803d;
+}
+
 .issue-list-repo-badge {
   background: var(--panel-muted);
   color: var(--text-primary);
   border: 1px solid var(--panel-border);
+}
+
+.issue-list-status-badge-solid {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+
+.issue-list-item-open-solid {
+  background: #b42318 !important;
+  color: #fff !important;
+}
+
+.issue-list-item-closed-solid {
+  background: #15803d !important;
+  color: #fff !important;
+}
+
+.issue-list-item-open-solid .issue-list-title,
+.issue-list-item-closed-solid .issue-list-title,
+.issue-list-item-open-solid .btn,
+.issue-list-item-closed-solid .btn {
+  color: #fff;
+}
+
+.issue-list-item-open-solid .issue-list-repo-badge,
+.issue-list-item-closed-solid .issue-list-repo-badge {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.issue-list-item-open-solid .text-muted,
+.issue-list-item-closed-solid .text-muted,
+.issue-list-item-open-solid .issue-list-body,
+.issue-list-item-closed-solid .issue-list-body {
+  color: rgba(255, 255, 255, 0.82) !important;
+}
+
+.issue-list-item-open-solid .btn-outline-primary,
+.issue-list-item-open-solid .btn-outline-secondary,
+.issue-list-item-closed-solid .btn-outline-primary,
+.issue-list-item-closed-solid .btn-outline-secondary {
+  border-color: rgba(255, 255, 255, 0.65);
+}
+
+.issue-list-item-open-solid .btn-outline-primary:hover,
+.issue-list-item-open-solid .btn-outline-secondary:hover,
+.issue-list-item-closed-solid .btn-outline-primary:hover,
+.issue-list-item-closed-solid .btn-outline-secondary:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: #fff;
+  color: #fff;
 }
 
 .issue-list-body {

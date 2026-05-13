@@ -55,21 +55,40 @@
       </div>
 
       <div class="d-flex justify-content-end mb-3">
-        <div class="btn-group shadow-sm" role="group" aria-label="Ansicht wechseln">
-          <button
-            class="btn btn-sm"
-            :class="viewMode === 'cards' ? 'btn-dark' : 'btn-outline-dark'"
-            @click="viewMode = 'cards'"
-          >
-            Karten
-          </button>
-          <button
-            class="btn btn-sm"
-            :class="viewMode === 'list' ? 'btn-dark' : 'btn-outline-dark'"
-            @click="viewMode = 'list'"
-          >
-            Liste
-          </button>
+        <div class="d-flex flex-wrap justify-content-end gap-2">
+          <div class="btn-group shadow-sm" role="group" aria-label="Farbdarstellung wechseln">
+            <button
+              class="btn btn-sm"
+              :class="issueColorMode === 'soft' ? 'btn-dark' : 'btn-outline-dark'"
+              @click="setIssueColorMode('soft')"
+            >
+              Standardfarben
+            </button>
+            <button
+              class="btn btn-sm"
+              :class="issueColorMode === 'solid' ? 'btn-dark' : 'btn-outline-dark'"
+              @click="setIssueColorMode('solid')"
+            >
+              Volltonfarben
+            </button>
+          </div>
+
+          <div class="btn-group shadow-sm" role="group" aria-label="Ansicht wechseln">
+            <button
+              class="btn btn-sm"
+              :class="viewMode === 'cards' ? 'btn-dark' : 'btn-outline-dark'"
+              @click="viewMode = 'cards'"
+            >
+              Karten
+            </button>
+            <button
+              class="btn btn-sm"
+              :class="viewMode === 'list' ? 'btn-dark' : 'btn-outline-dark'"
+              @click="viewMode = 'list'"
+            >
+              Liste
+            </button>
+          </div>
         </div>
       </div>
 
@@ -115,11 +134,11 @@
             :key="issue.id"
             class="col-12 col-md-6 col-xl-4"
           >
-            <IssueCard :issue="issue" />
+            <IssueCard :issue="issue" :color-mode="issueColorMode" />
           </div>
         </div>
 
-        <IssueList v-else :issues="issuesStore.filteredIssues" />
+        <IssueList v-else :issues="issuesStore.filteredIssues" :color-mode="issueColorMode" />
 
         <div v-if="issuesStore.filteredIssues.length > 0" class="mt-4 text-center text-muted small">
           {{ issuesStore.filteredIssues.length }} Issue{{ issuesStore.filteredIssues.length !== 1 ? 's' : '' }} angezeigt
@@ -144,8 +163,12 @@ const issuesStore = useIssuesStore()
 const router = useRouter()
 const viewMode = ref<'cards' | 'list'>('cards')
 const THEME_KEY = 'dashboard_theme'
+const ISSUE_COLOR_MODE_KEY = 'dashboard_issue_color_mode'
 const theme = ref<'light' | 'dark'>(
   localStorage.getItem(THEME_KEY) === 'dark' ? 'dark' : 'light',
+)
+const issueColorMode = ref<'soft' | 'solid'>(
+  localStorage.getItem(ISSUE_COLOR_MODE_KEY) === 'solid' ? 'solid' : 'soft',
 )
 const allowedUsers = getAllowedUsers()
 const filteredMembers = computed(() => {
@@ -161,6 +184,11 @@ const toggleTheme = (): void => {
   theme.value = theme.value === 'dark' ? 'light' : 'dark'
   localStorage.setItem(THEME_KEY, theme.value)
   applyTheme()
+}
+
+const setIssueColorMode = (mode: 'soft' | 'solid'): void => {
+  issueColorMode.value = mode
+  localStorage.setItem(ISSUE_COLOR_MODE_KEY, mode)
 }
 
 onMounted(async () => {
@@ -207,11 +235,11 @@ const formatDate = (iso: string): string =>
 }
 
 .status-panel-open {
-  background: #1d6f42;
+  background: #b42318;
 }
 
 .status-panel-closed {
-  background: #4b5563;
+  background: #15803d;
 }
 
 .status-panel-filtered {
