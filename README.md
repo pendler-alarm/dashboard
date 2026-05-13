@@ -101,7 +101,7 @@ Setze unter **Settings → Secrets and variables → Actions → Variables**:
 Diese Werte werden im Deploy-Workflow in den Vite-Build injiziert.
 
 ⚠️ **Wichtig:** Alle `VITE_*`-Werte sind im Frontend sichtbar.  
-Lege dort **keine Secrets** (z. B. PATs wie `READ_PENDLER_ALARM`) ab.
+Leg dort **keine Secrets** (z. B. PATs wie `READ_PENDLER_ALARM`) ab.
 
 ### Manueller Trigger
 
