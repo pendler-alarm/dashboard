@@ -74,6 +74,32 @@ Wenn `VITE_GITHUB_CLIENT_ID` konfiguriert ist:
 2. Besuche den angezeigten Link und gib den Code ein
 3. Das Dashboard authentifiziert sich automatisch
 
+## GitHub Pages Deployment
+
+Das Dashboard wird automatisch via GitHub Actions auf GitHub Pages deployed.
+
+### Deployment-URL
+
+Nach dem Setup ist das Dashboard erreichbar unter:
+**https://pendler-alarm.github.io/dashboard/**
+
+### Ersteinrichtung (einmalig)
+
+1. Gehe zu **Settings → Pages** im Repository `pendler-alarm/dashboard`.
+2. Wähle unter **Source** die Option **GitHub Actions**.
+3. Beim nächsten Push auf `main` (oder manuell über **Actions → Deploy to GitHub Pages → Run workflow**) wird das Dashboard gebaut und deployed.
+
+### Manueller Trigger
+
+Der Workflow kann jederzeit manuell ausgelöst werden:
+1. Gehe zu **Actions → Deploy to GitHub Pages**.
+2. Klicke auf **Run workflow**.
+
+### Lokale Entwicklung
+
+Die GitHub-Pages-Konfiguration hat keinen Einfluss auf den lokalen Dev-Server (`npm run dev`).
+Lokal wird weiterhin `http://localhost:5173/` verwendet.
+
 ## Benutzerverwaltung
 
 Setze `VITE_ALLOWED_USERS` auf eine komma-separierte Liste der erlaubten GitHub-Logins:
