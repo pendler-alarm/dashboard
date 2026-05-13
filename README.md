@@ -37,6 +37,7 @@ cp .env.example .env
 
 ```env
 # Optional: GitHub OAuth App Client ID für Device Flow Login
+# Wichtig: Das ist die öffentliche OAuth App Client ID (kein Secret, kein PAT)
 VITE_GITHUB_CLIENT_ID=your_client_id_here
 
 # Komma-separierte Liste erlaubter GitHub-Logins (leer = alle authentifizierten Nutzer)
@@ -70,7 +71,7 @@ Das Dashboard unterstützt zwei Anmeldemethoden:
 
 ### GitHub OAuth Device Flow (optional)
 Wenn `VITE_GITHUB_CLIENT_ID` konfiguriert ist:
-1. Klicke auf „Mit GitHub-OAuth anmelden"
+1. Klicke auf „Mit GitHub OAuth anmelden"
 2. Besuche den angezeigten Link und gib den Code ein
 3. Das Dashboard authentifiziert sich automatisch
 
@@ -88,6 +89,19 @@ Nach dem Setup ist das Dashboard erreichbar unter:
 1. Gehe zu **Settings → Pages** im Repository `pendler-alarm/dashboard`.
 2. Wähle unter **Source** die Option **GitHub Actions**.
 3. Beim nächsten Push auf `main` (oder manuell über **Actions → Deploy to GitHub Pages → Run workflow**) wird das Dashboard gebaut und deployed.
+
+### Actions-Variablen für Build/Deploy
+
+Setze unter **Settings → Secrets and variables → Actions → Variables**:
+
+- `VITE_GITHUB_CLIENT_ID` (optional, für OAuth-Login)
+- `VITE_ALLOWED_USERS`
+- `VITE_REPO_BLACKLIST`
+
+Diese Werte werden im Deploy-Workflow in den Vite-Build injiziert.
+
+⚠️ **Wichtig:** Alle `VITE_*`-Werte sind im Frontend sichtbar.  
+Lege dort **keine Secrets** (z. B. PATs wie `READ_PENDLER_ALARM`) ab.
 
 ### Manueller Trigger
 
