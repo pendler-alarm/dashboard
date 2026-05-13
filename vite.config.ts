@@ -5,6 +5,8 @@ import { resolve } from 'path'
 
 // https://vite.dev/config/
 export default defineConfig({
+  // Use the repository name as base path when deploying to GitHub Pages
+  base: process.env.GITHUB_ACTIONS ? '/dashboard/' : '/',
   plugins: [
     vue(),
     VitePWA({
