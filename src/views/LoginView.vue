@@ -94,11 +94,12 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 const auth = useAuthStore()
 const router = useRouter()
+const route = useRoute()
 
 const pat = ref('')
 const showDeviceFlow = ref(false)
@@ -124,7 +125,7 @@ function cancelDeviceFlow() {
 watch(
   () => auth.isAuthenticated,
   (isAuthenticated) => {
-    if (isAuthenticated) {
+    if (isAuthenticated && route.name !== 'dashboard') {
       router.push({ name: 'dashboard' })
     }
   },
