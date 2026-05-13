@@ -32,6 +32,7 @@ export const useIssuesStore = defineStore('issues', () => {
 
   const filters = ref<IssueFilters>({
     state: 'open',
+    search: '',
     label: '',
     milestone: '',
     assignee: '',
@@ -53,6 +54,24 @@ export const useIssuesStore = defineStore('issues', () => {
 
       // Repository
       if (filters.value.repo && issue.repository?.name !== filters.value.repo) return false
+
+      // Full-text search
+      if (filters.value.search) {
+        const query = filters.value.search.toLowerCase()
+        const haystack = [
+          issue.title,
+          issue.body ?? '',
+          issue.repository?.name ?? '',
+          issue.milestone?.title ?? '',
+          issue.user.login,
+          ...issue.labels.map((label) => label.name),
+          ...issue.assignees.map((assignee) => assignee.login),
+        ]
+          .join(' ')
+          .toLowerCase()
+
+        if (!haystack.includes(query)) return false
+      }
 
       // Label
       if (filters.value.label) {
@@ -163,6 +182,7 @@ export const useIssuesStore = defineStore('issues', () => {
   function resetFilters() {
     filters.value = {
       state: 'open',
+      search: '',
       label: '',
       milestone: '',
       assignee: '',

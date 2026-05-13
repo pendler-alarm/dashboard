@@ -2,6 +2,17 @@
   <div class="filter-bar card mb-4 border-0 shadow-sm">
     <div class="card-body">
       <div class="row g-3 align-items-end">
+        <div class="col-12 col-lg-4">
+          <label class="form-label fw-semibold small text-muted mb-1">Suche</label>
+          <input
+            class="form-control form-control-sm"
+            type="search"
+            :value="filters.search"
+            placeholder="Titel, Beschreibung, Labels, Benutzer ..."
+            @input="onFilter('search', ($event.target as HTMLInputElement).value)"
+          />
+        </div>
+
         <!-- State -->
         <div class="col-12 col-sm-6 col-md-4 col-lg-2">
           <label class="form-label fw-semibold small text-muted mb-1">Status</label>
@@ -69,6 +80,7 @@
       <div v-if="hasActiveFilters" class="mt-3 d-flex align-items-center gap-2 flex-wrap">
         <span class="small text-muted">Aktive Filter:</span>
         <span v-if="filters.state !== 'open'" class="badge bg-secondary">Status: {{ filters.state }}</span>
+        <span v-if="filters.search" class="badge bg-secondary">Suche: {{ filters.search }}</span>
         <span v-if="filters.repo" class="badge bg-secondary">Repo: {{ filters.repo }}</span>
         <span v-if="filters.priority" class="badge bg-secondary">Priorität: {{ filters.priority }}</span>
         <span v-if="filters.label" class="badge bg-secondary">Label: {{ filters.label }}</span>
@@ -106,6 +118,7 @@ function onFilter(key: keyof IssueFilters, value: string) {
 const hasActiveFilters = computed(() => {
   return (
     props.filters.state !== 'open' ||
+    props.filters.search !== '' ||
     props.filters.repo !== '' ||
     props.filters.label !== '' ||
     props.filters.milestone !== '' ||

@@ -49,11 +49,28 @@ export interface GitHubIssue {
 
 export interface IssueFilters {
   state: 'open' | 'closed' | 'all'
+  search: string
   label: string
   milestone: string
   assignee: string
   priority: string
   repo: string
+}
+
+export interface GitHubMarkdownFile {
+  name: string
+  path: string
+  html_url: string
+  download_url: string
+}
+
+export interface GitHubMarkdownDocument {
+  path: string
+  name: string
+  markdown: string
+  html: string
+  html_url: string
+  edit_url: string
 }
 
 export interface DeviceFlowResponse {

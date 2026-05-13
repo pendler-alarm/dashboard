@@ -4,12 +4,15 @@ import type {
   GitHubLabel,
   GitHubMilestone,
   GitHubRepository,
+  GitHubMarkdownFile,
+  GitHubMarkdownDocument,
   DeviceFlowResponse,
   TokenResponse,
 } from '@/types/github'
 
 const GITHUB_API = 'https://api.github.com'
 const ORG = 'pendler-alarm'
+const DOCS_REPO = 'DOKU'
 
 // GitHub OAuth App Client ID (set via env variable VITE_GITHUB_CLIENT_ID)
 const CLIENT_ID = import.meta.env.VITE_GITHUB_CLIENT_ID || ''
@@ -69,6 +72,59 @@ const filterIssues = (issues: GitHubIssue[]): GitHubIssue[] =>
       const repoName = issue.repository?.name ?? getRepoNameFromUrl(issue.repository_url)
       return repoName ? !isRepoBlacklisted(repoName) : true
     })
+
+const decodeBase64Utf8 = (value: string): string => {
+  const binary = atob(value.replace(/\n/g, ''))
+  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0))
+  return new TextDecoder().decode(bytes)
+}
+
+const escapeHtml = (value: string): string =>
+  value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;')
+
+type GitHubRepoMetadata = {
+  default_branch: string
+  html_url: string
+}
+
+type GitHubTreeResponse = {
+  tree: Array<{
+    path: string
+    type: 'blob' | 'tree'
+  }>
+}
+
+type GitHubContentResponse = {
+  name: string
+  path: string
+  content: string
+  html_url: string
+  download_url: string
+}
+
+const fetchGitHubJson = async <T>(url: string, token: string, init?: RequestInit): Promise<T> => {
+  const res = await fetch(url, {
+    ...init,
+    headers: {
+      ...authHeaders(token),
+      ...(init?.headers ?? {}),
+    },
+  })
+
+  if (!res.ok) {
+    throw new Error(`GitHub request failed: ${res.status}`)
+  }
+
+  return res.json()
+}
+
+const getRepoMetadata = async (token: string, repoName: string): Promise<GitHubRepoMetadata> =>
+  fetchGitHubJson<GitHubRepoMetadata>(`${GITHUB_API}/repos/${ORG}/${repoName}`, token)
 
 // ──────────────────────────────────────────────────────────
 // Device Flow
@@ -232,4 +288,73 @@ export async function getOrgMembers(token: string): Promise<GitHubUser[]> {
     page++
   }
   return members
+}
+
+export async function getDocsMarkdownFiles(token: string): Promise<GitHubMarkdownFile[]> {
+  const repo = await getRepoMetadata(token, DOCS_REPO)
+  const tree = await fetchGitHubJson<GitHubTreeResponse>(
+    `${GITHUB_API}/repos/${ORG}/${DOCS_REPO}/git/trees/${repo.default_branch}?recursive=1`,
+    token,
+  )
+
+  return tree.tree
+    .filter((entry) => entry.type === 'blob' && entry.path.toLowerCase().endsWith('.md'))
+    .map((entry) => ({
+      name: entry.path.split('/').at(-1) ?? entry.path,
+      path: entry.path,
+      html_url: `${repo.html_url}/blob/${repo.default_branch}/${entry.path}`,
+      download_url: `https://raw.githubusercontent.com/${ORG}/${DOCS_REPO}/${repo.default_branch}/${entry.path}`,
+    }))
+    .sort((a, b) => a.path.localeCompare(b.path))
+}
+
+export async function getDocsMarkdownDocument(
+  token: string,
+  path: string,
+): Promise<GitHubMarkdownDocument> {
+  const repo = await getRepoMetadata(token, DOCS_REPO)
+  const encodedPath = path
+    .split('/')
+    .map((part) => encodeURIComponent(part))
+    .join('/')
+
+  const content = await fetchGitHubJson<GitHubContentResponse>(
+    `${GITHUB_API}/repos/${ORG}/${DOCS_REPO}/contents/${encodedPath}?ref=${repo.default_branch}`,
+    token,
+  )
+
+  const markdown = decodeBase64Utf8(content.content)
+  let html = ''
+
+  try {
+    const res = await fetch(`${GITHUB_API}/markdown`, {
+      method: 'POST',
+      headers: {
+        ...authHeaders(token),
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        text: markdown,
+        mode: 'gfm',
+        context: `${ORG}/${DOCS_REPO}`,
+      }),
+    })
+
+    if (!res.ok) {
+      throw new Error(`Markdown render failed: ${res.status}`)
+    }
+
+    html = await res.text()
+  } catch {
+    html = `<pre>${escapeHtml(markdown)}</pre>`
+  }
+
+  return {
+    path: content.path,
+    name: content.name,
+    markdown,
+    html,
+    html_url: content.html_url,
+    edit_url: `${repo.html_url}/edit/${repo.default_branch}/${content.path}`,
+  }
 }
