@@ -41,6 +41,9 @@ VITE_GITHUB_CLIENT_ID=your_client_id_here
 
 # Komma-separierte Liste erlaubter GitHub-Logins (leer = alle authentifizierten Nutzer)
 VITE_ALLOWED_USERS=user1,user2,user3
+
+# Komma-separierte Liste ausgeblendeter Repositories
+VITE_REPO_BLACKLIST=dashboard_old
 ```
 
 ### 3. Entwicklungsserver starten
@@ -80,3 +83,13 @@ VITE_ALLOWED_USERS=alice,bob,charlie
 ```
 
 Ist die Variable leer, kann jeder authentifizierte GitHub-Nutzer das Dashboard sehen.
+
+## Repository-Blacklist
+
+Setze `VITE_REPO_BLACKLIST` auf eine komma-separierte Liste von Repository-Namen, die im Dashboard komplett ignoriert werden sollen:
+
+```env
+VITE_REPO_BLACKLIST=dashboard_old,legacy_repo
+```
+
+Blacklisted Repositories erscheinen nicht in der Repo-Auswahl, ihre Issues werden nicht geladen, und zugehörige Labels sowie Milestones werden dadurch ebenfalls nicht berücksichtigt.

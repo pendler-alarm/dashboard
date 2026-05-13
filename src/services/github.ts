@@ -22,6 +22,54 @@ function authHeaders(token: string) {
   }
 }
 
+const parseRepoBlacklist = (value: string | undefined): Set<string> => {
+  if (!value) return new Set()
+
+  return new Set(
+    value
+      .split(',')
+      .map((repo) => repo.trim())
+      .filter(Boolean),
+  )
+}
+
+const REPO_BLACKLIST = parseRepoBlacklist(import.meta.env.VITE_REPO_BLACKLIST)
+
+const isRepoBlacklisted = (repoName: string): boolean => REPO_BLACKLIST.has(repoName)
+
+const filterRepos = (repos: GitHubRepository[]): GitHubRepository[] =>
+  repos.filter((repo) => !isRepoBlacklisted(repo.name))
+
+const getRepoNameFromUrl = (repositoryUrl: string): string | null => {
+  const match = repositoryUrl.match(/repos\/.+\/([^/]+)$/)
+  return match?.[1] ?? null
+}
+
+const enrichIssueRepository = (issue: GitHubIssue): GitHubIssue => {
+  if (issue.repository) return issue
+
+  const match = issue.repository_url.match(/repos\/(.+)\/(.+)$/)
+  if (!match) return issue
+
+  issue.repository = {
+    id: 0,
+    name: match[2],
+    full_name: `${match[1]}/${match[2]}`,
+    html_url: `https://github.com/${match[1]}/${match[2]}`,
+    private: false,
+  }
+
+  return issue
+}
+
+const filterIssues = (issues: GitHubIssue[]): GitHubIssue[] =>
+  issues
+    .map(enrichIssueRepository)
+    .filter((issue) => {
+      const repoName = issue.repository?.name ?? getRepoNameFromUrl(issue.repository_url)
+      return repoName ? !isRepoBlacklisted(repoName) : true
+    })
+
 // ──────────────────────────────────────────────────────────
 // Device Flow
 // ──────────────────────────────────────────────────────────
@@ -69,7 +117,7 @@ export async function getAuthenticatedUser(token: string): Promise<GitHubUser> {
 // ──────────────────────────────────────────────────────────
 
 export async function getOrgRepos(token: string): Promise<GitHubRepository[]> {
-  const repos: GitHubRepository[] = []
+  const allRepos: GitHubRepository[] = []
   let page = 1
   while (true) {
     const res = await fetch(
@@ -78,11 +126,11 @@ export async function getOrgRepos(token: string): Promise<GitHubRepository[]> {
     )
     if (!res.ok) break
     const data: GitHubRepository[] = await res.json()
-    repos.push(...data)
+    allRepos.push(...data)
     if (data.length < 100) break
     page++
   }
-  return repos
+  return filterRepos(allRepos)
 }
 
 // ──────────────────────────────────────────────────────────
@@ -112,23 +160,7 @@ export async function getOrgIssues(
     if (!res.ok) break
     const data: GitHubIssue[] = await res.json()
 
-    // Enrich each issue with repository info parsed from repository_url
-    data.forEach((issue) => {
-      if (!issue.repository) {
-        const match = issue.repository_url.match(/repos\/(.+)\/(.+)$/)
-        if (match) {
-          issue.repository = {
-            id: 0,
-            name: match[2],
-            full_name: `${match[1]}/${match[2]}`,
-            html_url: `https://github.com/${match[1]}/${match[2]}`,
-            private: false,
-          }
-        }
-      }
-    })
-
-    issues.push(...data)
+    issues.push(...filterIssues(data))
     if (data.length < 100) break
     page++
   }
