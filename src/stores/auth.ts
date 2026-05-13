@@ -12,6 +12,8 @@ const ALLOWED_USERS: string[] = (import.meta.env.VITE_ALLOWED_USERS || '')
 
 const TOKEN_KEY = 'gh_token'
 
+export const getAllowedUsers = (): string[] => ALLOWED_USERS
+
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(localStorage.getItem(TOKEN_KEY))
   const user = ref<GitHubUser | null>(null)

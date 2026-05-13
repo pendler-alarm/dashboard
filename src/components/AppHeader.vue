@@ -9,6 +9,14 @@
       </RouterLink>
 
       <div class="d-flex align-items-center gap-2 ms-lg-4 order-lg-2">
+        <button
+          class="btn btn-sm btn-outline-light"
+          type="button"
+          @click="emit('toggle-theme')"
+        >
+          {{ theme === 'dark' ? 'Light Mode' : 'Dark Mode' }}
+        </button>
+
         <slot name="meta" />
 
         <div class="dropdown">
@@ -64,10 +72,12 @@ import type { GitHubUser } from '@/types/github'
 
 defineProps<{
   user: GitHubUser | null
+  theme: 'light' | 'dark'
 }>()
 
 const emit = defineEmits<{
   (e: 'logout'): void
+  (e: 'toggle-theme'): void
 }>()
 
 const route = useRoute()

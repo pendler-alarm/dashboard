@@ -54,7 +54,7 @@ export interface IssueFilters {
   milestone: string
   assignee: string
   priority: string
-  repo: string
+  repo: string[]
 }
 
 export interface GitHubMarkdownFile {

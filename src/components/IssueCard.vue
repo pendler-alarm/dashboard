@@ -19,7 +19,7 @@
             :href="issue.html_url"
             target="_blank"
             rel="noopener"
-            class="text-dark fw-semibold text-decoration-none issue-title"
+            class="fw-semibold text-decoration-none issue-title"
           >
             {{ issue.title }}
           </a>
@@ -151,6 +151,8 @@ function formatDate(iso: string): string {
 <style scoped>
 .issue-card {
   transition: box-shadow 0.15s ease;
+  background: var(--panel-surface);
+  color: var(--text-primary);
 }
 .issue-card:hover {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12) !important;
@@ -158,6 +160,7 @@ function formatDate(iso: string): string {
 .issue-title {
   word-break: break-word;
   line-height: 1.4;
+  color: var(--text-primary);
 }
 .min-width-0 {
   min-width: 0;

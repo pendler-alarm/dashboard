@@ -37,7 +37,7 @@ export const useIssuesStore = defineStore('issues', () => {
     milestone: '',
     assignee: '',
     priority: '',
-    repo: '',
+    repo: [],
   })
 
   // ──────────────────────────────────────────────────────────
@@ -53,7 +53,12 @@ export const useIssuesStore = defineStore('issues', () => {
       if (filters.value.state !== 'all' && issue.state !== filters.value.state) return false
 
       // Repository
-      if (filters.value.repo && issue.repository?.name !== filters.value.repo) return false
+      if (
+        filters.value.repo.length > 0 &&
+        !filters.value.repo.includes(issue.repository?.name ?? '')
+      ) {
+        return false
+      }
 
       // Full-text search
       if (filters.value.search) {
@@ -187,7 +192,7 @@ export const useIssuesStore = defineStore('issues', () => {
       milestone: '',
       assignee: '',
       priority: '',
-      repo: '',
+      repo: [],
     }
   }
 

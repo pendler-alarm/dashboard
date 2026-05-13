@@ -1,6 +1,6 @@
 <template>
   <div class="dashboard-view">
-    <AppHeader :user="auth.user" @logout="logout">
+    <AppHeader :user="auth.user" :theme="theme" @logout="logout" @toggle-theme="toggleTheme">
       <template #meta>
         <span v-if="issuesStore.lastFetchedAt" class="text-muted small d-none d-md-block">
           Aktualisiert: {{ formatDate(issuesStore.lastFetchedAt) }}
@@ -29,27 +29,27 @@
     <main class="container-fluid px-4 py-4">
       <div class="row g-3 mb-4">
         <div class="col-6 col-md-3">
-          <div class="card border-0 shadow-sm text-center py-3">
-            <div class="display-6 fw-bold text-success">{{ issuesStore.openCount }}</div>
-            <div class="text-muted small">Offen</div>
+          <div class="card border-0 shadow-sm text-center py-3 status-panel status-panel-open">
+            <div class="display-6 fw-bold">{{ issuesStore.openCount }}</div>
+            <div class="small">Offen</div>
           </div>
         </div>
         <div class="col-6 col-md-3">
-          <div class="card border-0 shadow-sm text-center py-3">
-            <div class="display-6 fw-bold text-secondary">{{ issuesStore.closedCount }}</div>
-            <div class="text-muted small">Geschlossen</div>
+          <div class="card border-0 shadow-sm text-center py-3 status-panel status-panel-closed">
+            <div class="display-6 fw-bold">{{ issuesStore.closedCount }}</div>
+            <div class="small">Geschlossen</div>
           </div>
         </div>
         <div class="col-6 col-md-3">
-          <div class="card border-0 shadow-sm text-center py-3">
-            <div class="display-6 fw-bold text-primary">{{ issuesStore.filteredIssues.length }}</div>
-            <div class="text-muted small">Gefiltert</div>
+          <div class="card border-0 shadow-sm text-center py-3 status-panel status-panel-filtered">
+            <div class="display-6 fw-bold">{{ issuesStore.filteredIssues.length }}</div>
+            <div class="small">Gefiltert</div>
           </div>
         </div>
         <div class="col-6 col-md-3">
-          <div class="card border-0 shadow-sm text-center py-3">
-            <div class="display-6 fw-bold text-info">{{ issuesStore.repos.length }}</div>
-            <div class="text-muted small">Repositories</div>
+          <div class="card border-0 shadow-sm text-center py-3 status-panel status-panel-repos">
+            <div class="display-6 fw-bold">{{ issuesStore.repos.length }}</div>
+            <div class="small">Repositories</div>
           </div>
         </div>
       </div>
@@ -77,7 +77,7 @@
         :filters="issuesStore.filters"
         :labels="issuesStore.labels"
         :milestones="issuesStore.milestones"
-        :members="issuesStore.members"
+        :members="filteredMembers"
         :repos="issuesStore.repos"
         @update="issuesStore.setFilter"
         @reset="issuesStore.resetFilters"
@@ -130,21 +130,41 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
 import FilterBar from '@/components/FilterBar.vue'
 import IssueCard from '@/components/IssueCard.vue'
 import IssueList from '@/components/IssueList.vue'
-import { useAuthStore } from '@/stores/auth'
+import { getAllowedUsers, useAuthStore } from '@/stores/auth'
 import { useIssuesStore } from '@/stores/issues'
 
 const auth = useAuthStore()
 const issuesStore = useIssuesStore()
 const router = useRouter()
 const viewMode = ref<'cards' | 'list'>('cards')
+const THEME_KEY = 'dashboard_theme'
+const theme = ref<'light' | 'dark'>(
+  localStorage.getItem(THEME_KEY) === 'dark' ? 'dark' : 'light',
+)
+const allowedUsers = getAllowedUsers()
+const filteredMembers = computed(() => {
+  if (allowedUsers.length === 0) return issuesStore.members
+  return issuesStore.members.filter((member) => allowedUsers.includes(member.login.toLowerCase()))
+})
+
+const applyTheme = (): void => {
+  document.documentElement.setAttribute('data-theme', theme.value)
+}
+
+const toggleTheme = (): void => {
+  theme.value = theme.value === 'dark' ? 'light' : 'dark'
+  localStorage.setItem(THEME_KEY, theme.value)
+  applyTheme()
+}
 
 onMounted(async () => {
+  applyTheme()
   if (auth.token) {
     await issuesStore.fetchAll(auth.token)
     issuesStore.startAutoRefresh(60_000)
@@ -180,6 +200,26 @@ const formatDate = (iso: string): string =>
 <style scoped>
 .spin {
   animation: spin 0.8s linear infinite;
+}
+
+.status-panel {
+  color: #fff;
+}
+
+.status-panel-open {
+  background: #1d6f42;
+}
+
+.status-panel-closed {
+  background: #4b5563;
+}
+
+.status-panel-filtered {
+  background: #005f73;
+}
+
+.status-panel-repos {
+  background: #7c2d12;
 }
 
 @keyframes spin {

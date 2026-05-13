@@ -1,6 +1,6 @@
 <template>
-  <div class="card border-0 shadow-sm overflow-hidden">
-    <div class="list-group list-group-flush">
+  <div class="card border-0 shadow-sm overflow-hidden issue-list-card">
+    <div class="list-group list-group-flush issue-list-group">
       <div
         v-for="issue in issues"
         :key="issue.id"
@@ -12,7 +12,7 @@
               <span class="badge" :class="issue.state === 'open' ? 'bg-success-subtle text-success-emphasis' : 'bg-secondary-subtle text-secondary-emphasis'">
                 {{ issue.state === 'open' ? 'Offen' : 'Geschlossen' }}
               </span>
-              <span class="badge bg-light text-dark border">{{ issue.repository?.name ?? repoName(issue.repository_url) }}</span>
+              <span class="badge issue-list-repo-badge">{{ issue.repository?.name ?? repoName(issue.repository_url) }}</span>
               <span class="text-muted small">#{{ issue.number }}</span>
               <span class="text-muted small">Aktualisiert: {{ formatDate(issue.updated_at) }}</span>
             </div>
@@ -21,7 +21,7 @@
               :href="issue.html_url"
               target="_blank"
               rel="noopener"
-              class="fw-semibold text-decoration-none text-dark d-inline-block mb-2 issue-list-title"
+              class="fw-semibold text-decoration-none d-inline-block mb-2 issue-list-title"
             >
               {{ issue.title }}
             </a>
@@ -102,6 +102,19 @@ const formatDate = (iso: string): string =>
 .issue-list-title,
 .issue-list-body {
   word-break: break-word;
+}
+
+.issue-list-card,
+.issue-list-group,
+.issue-list-group .list-group-item {
+  background: var(--panel-surface);
+  color: var(--text-primary);
+}
+
+.issue-list-repo-badge {
+  background: var(--panel-muted);
+  color: var(--text-primary);
+  border: 1px solid var(--panel-border);
 }
 
 .issue-list-body {

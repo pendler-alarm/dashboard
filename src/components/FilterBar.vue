@@ -26,10 +26,37 @@
         <!-- Repository -->
         <div class="col-12 col-sm-6 col-md-4 col-lg-2">
           <label class="form-label fw-semibold small text-muted mb-1">Repository</label>
-          <select class="form-select form-select-sm" :value="filters.repo" @change="onFilter('repo', ($event.target as HTMLSelectElement).value)">
-            <option value="">Alle Repos</option>
-            <option v-for="repo in repos" :key="repo.id" :value="repo.name">{{ repo.name }}</option>
-          </select>
+          <div class="dropdown">
+            <button
+              class="btn btn-sm filter-dropdown-toggle w-100 text-start d-flex align-items-center justify-content-between"
+              type="button"
+              data-bs-toggle="dropdown"
+              data-bs-auto-close="outside"
+            >
+              <span class="text-truncate">{{ repoSelectionLabel }}</span>
+              <span class="badge text-bg-secondary ms-2">{{ filters.repo.length }}</span>
+            </button>
+            <div class="dropdown-menu repo-dropdown-menu p-2 shadow-sm w-100">
+              <button class="btn btn-link btn-sm p-0 mb-2 text-decoration-none" type="button" @click="clearRepos">
+                Auswahl löschen
+              </button>
+              <div class="d-grid gap-1">
+                <label
+                  v-for="repo in repos"
+                  :key="repo.id"
+                  class="dropdown-item-text d-flex align-items-center gap-2 rounded px-2 py-1 repo-option"
+                >
+                  <input
+                    class="form-check-input mt-0"
+                    type="checkbox"
+                    :checked="filters.repo.includes(repo.name)"
+                    @change="toggleRepo(repo.name)"
+                  />
+                  <span class="small">{{ repo.name }}</span>
+                </label>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Priority -->
@@ -81,7 +108,7 @@
         <span class="small text-muted">Aktive Filter:</span>
         <span v-if="filters.state !== 'open'" class="badge bg-secondary">Status: {{ filters.state }}</span>
         <span v-if="filters.search" class="badge bg-secondary">Suche: {{ filters.search }}</span>
-        <span v-if="filters.repo" class="badge bg-secondary">Repo: {{ filters.repo }}</span>
+        <span v-for="repo in filters.repo" :key="repo" class="badge bg-secondary">Repo: {{ repo }}</span>
         <span v-if="filters.priority" class="badge bg-secondary">Priorität: {{ filters.priority }}</span>
         <span v-if="filters.label" class="badge bg-secondary">Label: {{ filters.label }}</span>
         <span v-if="filters.milestone" class="badge bg-secondary">Milestone: {{ filters.milestone }}</span>
@@ -107,19 +134,38 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'update', key: keyof IssueFilters, value: string): void
+  (e: 'update', key: Exclude<keyof IssueFilters, 'repo'>, value: string): void
+  (e: 'update', key: 'repo', value: string[]): void
   (e: 'reset'): void
 }>()
 
-function onFilter(key: keyof IssueFilters, value: string) {
+const onFilter = (key: Exclude<keyof IssueFilters, 'repo'>, value: string): void => {
   emit('update', key, value)
 }
+
+const toggleRepo = (repoName: string): void => {
+  const nextRepos = props.filters.repo.includes(repoName)
+    ? props.filters.repo.filter((repo) => repo !== repoName)
+    : [...props.filters.repo, repoName]
+
+  emit('update', 'repo', nextRepos)
+}
+
+const clearRepos = (): void => {
+  emit('update', 'repo', [])
+}
+
+const repoSelectionLabel = computed(() => {
+  if (props.filters.repo.length === 0) return 'Alle Repos'
+  if (props.filters.repo.length === 1) return props.filters.repo[0]
+  return `${props.filters.repo.length} Repositories ausgewählt`
+})
 
 const hasActiveFilters = computed(() => {
   return (
     props.filters.state !== 'open' ||
     props.filters.search !== '' ||
-    props.filters.repo !== '' ||
+    props.filters.repo.length > 0 ||
     props.filters.label !== '' ||
     props.filters.milestone !== '' ||
     props.filters.assignee !== '' ||
@@ -127,3 +173,33 @@ const hasActiveFilters = computed(() => {
   )
 })
 </script>
+
+<style scoped>
+.filter-dropdown-toggle {
+  border: 1px solid var(--panel-border);
+  background: var(--panel-surface);
+  color: var(--text-primary);
+}
+
+.filter-dropdown-toggle:hover,
+.filter-dropdown-toggle:focus {
+  border-color: var(--accent-color);
+  background: var(--panel-surface);
+  color: var(--text-primary);
+}
+
+.repo-dropdown-menu {
+  max-height: 18rem;
+  overflow-y: auto;
+  background: var(--panel-surface);
+  border-color: var(--panel-border);
+}
+
+.repo-option {
+  color: var(--text-primary);
+}
+
+.repo-option:hover {
+  background: var(--panel-muted);
+}
+</style>
