@@ -38,6 +38,9 @@ jobs:
         run: npm run build
         env:
           GITHUB_ACTIONS: true
+          VITE_GITHUB_CLIENT_ID: ${{ vars.VITE_GITHUB_CLIENT_ID }}
+          VITE_ALLOWED_USERS: ${{ vars.VITE_ALLOWED_USERS }}
+          VITE_REPO_BLACKLIST: ${{ vars.VITE_REPO_BLACKLIST }}
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

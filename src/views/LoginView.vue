@@ -21,6 +21,7 @@
 
         <!-- PAT Login -->
         <div v-if="!showDeviceFlow">
+          <p class="text-muted small mb-3">Wähle eine Anmeldemethode:</p>
           <form @submit.prevent="loginWithPAT">
             <div class="mb-3">
               <label for="pat" class="form-label fw-semibold">Personal Access Token</label>
@@ -43,13 +44,13 @@
             </div>
             <button type="submit" class="btn btn-primary w-100" :disabled="auth.loading">
               <span v-if="auth.loading" class="spinner-border spinner-border-sm me-2" role="status" />
-              Anmelden
+              Mit Personal Access Token anmelden
             </button>
           </form>
 
           <div v-if="hasClientId" class="mt-3 text-center">
             <button class="btn btn-outline-secondary btn-sm" @click="startDeviceFlow">
-              Stattdessen mit GitHub-OAuth anmelden
+              Mit GitHub OAuth anmelden
             </button>
           </div>
         </div>
@@ -92,7 +93,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
@@ -119,6 +120,15 @@ function cancelDeviceFlow() {
   auth.cancelDeviceFlow()
   showDeviceFlow.value = false
 }
+
+watch(
+  () => auth.isAuthenticated,
+  (isAuthenticated) => {
+    if (isAuthenticated) {
+      router.push({ name: 'dashboard' })
+    }
+  },
+)
 </script>
 
 <style scoped>
