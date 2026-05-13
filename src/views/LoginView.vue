@@ -128,6 +128,7 @@ watch(
       router.push({ name: 'dashboard' })
     }
   },
+  { immediate: true },
 )
 </script>
 
